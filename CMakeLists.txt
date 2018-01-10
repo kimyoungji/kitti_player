@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(kitti_player)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
-add_definitions(-std=c++11)
+ add_definitions(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -20,10 +20,13 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   pcl_ros
   pcl_conversions
+  camera_info_manager
   image_transport
   cv_bridge
   message_generation
   dynamic_reconfigure
+  tf
+  tf_conversions
 )
 
 find_package (Qt5Widgets)
@@ -135,6 +138,7 @@ catkin_package(
     std_msgs
     pcl_ros
     pcl_conversions
+    camera_info_manager
     image_transport
     cv_bridge
 #  DEPENDS system_lib
