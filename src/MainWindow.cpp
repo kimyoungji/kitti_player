@@ -43,16 +43,14 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     private_nh.param("left_color_topic", str_left_color_topic_, std::string("/kitti/left_color_image"));
     private_nh.param("right_color_topic", str_right_color_topic_, std::string("/kitti/right_color_image"));
     private_nh.param("velodyne_topic", str_velodyne_topic_, std::string("/kitti/velodyne_points"));
-    private_nh.param("depth_map_topic", str_depth_map_topic_, std::string("/kitti/depth_map"));
 
     private_nh.param("left_image_pub", is_left_image_pub_, true);
-    private_nh.param("right_image_pub", is_right_image_pub_, false);
+    private_nh.param("right_image_pub", is_right_image_pub_, true);
     private_nh.param("left_color_image_pub", is_left_color_image_pub_, false);
     private_nh.param("right_color_image_pub", is_right_color_image_pub_, false);
     private_nh.param("velodyne_pub", is_velodyne_pub_, true);
-    private_nh.param("depth_map_pub", is_depth_map_pub_, false);
 
-//    cout << "left_color: " << is_left_color_image_pub_ << endl;
+    cout << "left_color: " << is_left_color_image_pub_ << endl;
 
     data_path_ = QString::fromStdString(str_path_);
 
@@ -61,11 +59,10 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     this->nh_ = node;
 
     it_ = new image_transport::ImageTransport(nh_);
-    left_img_pub_ = it_->advertise(str_left_topic_, 10);
-    right_img_pub_ = it_->advertise(str_right_topic_, 10);
-    left_color_img_pub_ = it_->advertise(str_left_color_topic_, 10);
-    right_color_img_pub_ = it_->advertise(str_right_color_topic_, 10);
-    depth_map_pub_ = it_->advertise(str_depth_map_topic_, 10);
+    left_img_pub_ = it_->advertiseCamera(str_left_topic_, 10);
+    right_img_pub_ = it_->advertiseCamera(str_right_topic_, 10);
+    left_color_img_pub_ = it_->advertiseCamera(str_left_color_topic_, 10);
+    right_color_img_pub_ = it_->advertiseCamera(str_right_color_topic_, 10);
 
     pc_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(str_velodyne_topic_, 10);
 
@@ -77,6 +74,16 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
 //    camlidar_calib_.reset(new camlidar::CamLidarCalib(node, private_nh));
 //    connect(camlidar_calib_.get(), SIGNAL(image_signal()), this, SLOT(set_pixmap()));
 //    camlidar_thread_ = std::thread(&camlidar::CamLidarCalib::run, camlidar_calib_);
+    
+//    cout<< "publish tfs: "<< kitti_data_.Tr()<<endl;
+//    static tf::TransformBroadcaster br;
+//    tf::Transform transform;
+//    Eigen::Matrix4d T = Eigen::Matrix4d::Identity();
+//    T.block<3,4>(0,0) = kitti_data_.Tr();
+//    Eigen::Affine3d eigen_affine_Tr(T);
+//    tf::transformEigenToTF(eigen_affine_Tr,transform);
+//    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/Camera0", "/kitti/Velodyne"));
+
 }
 
 void MainWindow::dynamic_parameter_callback(kitti_player::kitti_playerConfig &config, uint32_t level)
@@ -116,8 +123,6 @@ void MainWindow::reset_sequence()
 
 void MainWindow::load_data()
 {
-    sync_time_ = ros::Time::now();
-
     if(index_manager.index() >= kitti_data_.data_length()) return;
 
     if(ui->layerSelector64->isChecked()) kitti_data_.velodyne_layer(Layer64);
@@ -126,21 +131,21 @@ void MainWindow::load_data()
     // Setting data and Publish
     if(is_left_image_pub_) {
         kitti_data_.set_left_image(index_manager.index());
-        publish_image(left_img_pub_, kitti_data_.left_image());
+        publish_image(left_img_pub_, kitti_data_.left_image(), kitti_data_.P0());
     }
 
     if(is_right_image_pub_) {
         kitti_data_.set_right_image(index_manager.index());
-        publish_image(right_img_pub_, kitti_data_.right_image());
+        publish_image(right_img_pub_, kitti_data_.right_image(), kitti_data_.P1());
     }
 
     if(is_left_color_image_pub_) {
         kitti_data_.set_left_color_image(index_manager.index());
-        publish_image(left_color_img_pub_, kitti_data_.left_color_image());
+        publish_image(left_color_img_pub_, kitti_data_.left_color_image(), kitti_data_.P2());
     }
     if(is_right_color_image_pub_) {
         kitti_data_.set_right_color_image(index_manager.index());
-        publish_image(right_color_img_pub_, kitti_data_.right_color_image());
+        publish_image(right_color_img_pub_, kitti_data_.right_color_image(), kitti_data_.P3());
     }
 
     if(is_velodyne_pub_) {
@@ -170,51 +175,61 @@ void MainWindow::load_data()
 
     ui->imageLabel->setPixmap(vis_image.scaledToWidth(ui->imageLabel->width()));
 
+
+//  publish tfs
+    static tf::TransformBroadcaster br;
+    tf::Transform transform;
+    Eigen::Matrix4d T = Eigen::Matrix4d::Identity();
+    T.block<3,4>(0,0) = kitti_data_.Tr();
+    Eigen::Affine3d eigen_affine_Tr(T);
+    tf::transformEigenToTF(eigen_affine_Tr,transform);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/World", "/kitti/Velodyne"));
+
+    kitti_data_.set_pose(index_manager.index());
+    Eigen::Affine3d eigen_affine_pose(kitti_data_.pose_data());
+    tf::transformEigenToTF(eigen_affine_pose,transform);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/World", "/kitti/Current"));
+
     // increase index
     index_manager.inc();
+//    // Make depthmap
+//    Matrix3x4 P0 = kitti_data_.P0();
+//    Matrix3x4 P1 = kitti_data_.P1();
+//    Matrix3x4 P2 = kitti_data_.P2();
+//    Matrix3x4 P3 = kitti_data_.P3();
+//    Matrix3x4 Tr = kitti_data_.Tr();
 
-    if (is_depth_map_pub_) {
-        // Make depthmap
-        Matrix3x4 P0 = kitti_data_.P0();
-        Matrix3x4 P1 = kitti_data_.P1();
-        Matrix3x4 P2 = kitti_data_.P2();
-        Matrix3x4 P3 = kitti_data_.P3();
-        Matrix3x4 Tr = kitti_data_.Tr();
+//    cv::Mat left_cvimg = kitti_data_.left_color_image();
+//    cv::Mat resized_img;
+//    cv::Mat show_img;
 
-        cv::Mat left_cvimg = kitti_data_.left_image();
-        cv::Mat resized_img;
-        cv::Mat show_img;
+//    double scale = 0.45;//0.2;
+//    cv::resize(left_cvimg, show_img, cv::Size(), scale, scale);
+//    cv::resize(left_cvimg, resized_img, cv::Size(), scale, scale);
 
-        double scale = 1.0;//0.2;s
-        cv::resize(left_cvimg, show_img, cv::Size(), scale, scale);
-        cv::resize(left_cvimg, resized_img, cv::Size(), scale, scale);
+//    cv::Mat depth_map = cv::Mat(show_img.size(), CV_32F, cv::Scalar(0));
 
-        cv::Mat depth_map = cv::Mat(show_img.size(), CV_32F, cv::Scalar(0));
+//    for (auto iter = kitti_data_.velodyne_data().begin(); iter != kitti_data_.velodyne_data().end(); ++iter) {
 
-        for (auto iter = kitti_data_.velodyne_data().begin(); iter != kitti_data_.velodyne_data().end(); ++iter) {
+//        Eigen::Vector4d XYZ_vel (iter->x, iter->y, iter->z, 1.0);
+//        Eigen::Vector3d XYZ_cam = Tr*XYZ_vel;
+//        Eigen::Vector4d XYZ(XYZ_cam(0), XYZ_cam(1), XYZ_cam(2), 1.0);
 
-            Eigen::Vector4d XYZ_vel (iter->x, iter->y, iter->z, 1.0);
-            Eigen::Vector3d XYZ_cam = Tr*XYZ_vel;
-            Eigen::Vector4d XYZ(XYZ_cam(0), XYZ_cam(1), XYZ_cam(2), 1.0);
+//        Eigen::Vector3d xyz = P2 * XYZ;
 
-//            Eigen::Vector3d xyz = P0 * XYZ;
-            Eigen::Vector3d xyz = P0 * XYZ;
+//        Eigen::Vector2d uv(xyz(0)/xyz(2), xyz(1)/xyz(2));
+//        uv.noalias() = uv * scale;
 
-            Eigen::Vector2d uv(xyz(0)/xyz(2), xyz(1)/xyz(2));
-            uv.noalias() = uv * scale;
+//        int u = static_cast<int> (round(uv(0)));
+//        int v = static_cast<int> (round(uv(1)));
 
-            int u = static_cast<int> (round(uv(0)));
-            int v = static_cast<int> (round(uv(1)));
+//        if (u > 0 && u < show_img.cols && v > 0 && v < show_img.rows && XYZ(2) > 0) {
+//            depth_map.at<float> (v, u) = XYZ(2);
+//            cv::circle(show_img, cv::Point(u, v), 0.1, cv::Scalar(0, 0, 255), -1);
+//        }
 
-            if (u > 0 && u < show_img.cols && v > 0 && v < show_img.rows && XYZ(2) > 0) {
-                depth_map.at<float> (v, u) = XYZ(2);
-    //            cv::circle(show_img, cv::Point(u, v), 0.1, cv::Scalar(0, 0, 255), -1);
-            }
+//    }
 
-        }
-
-        publish_image(depth_map_pub_, depth_map);
-    }
 
 //    cv::namedWindow("test", cv::WINDOW_NORMAL);
 //    cv::imshow("test", show_img);
@@ -232,23 +247,27 @@ void MainWindow::load_data()
 
 }
 
-void MainWindow::publish_image(image_transport::Publisher& img_pub, cv::Mat& img)
+void MainWindow::publish_image(image_transport::CameraPublisher& img_pub, cv::Mat& img, Matrix3x4 P)
 {
     cv_bridge::CvImage cv_image;
     cv_image.header.seq = index_manager.index();
-//    cv_image.header.stamp = ros::Time::now();
-    cv_image.header.stamp = sync_time_;
+    cv_image.header.stamp = ros::Time::now();
     cv_image.header.frame_id = "kitti";
     if(img.type() == CV_8UC1)
         cv_image.encoding = sensor_msgs::image_encodings::MONO8;
     else if(img.type() == CV_8UC3)
         cv_image.encoding = sensor_msgs::image_encodings::BGR8;
-    else if(img.type() == CV_32F)
-        cv_image.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
 
     cv_image.image = img;
 
-    img_pub.publish(cv_image.toImageMsg());
+    sensor_msgs::CameraInfoPtr ci(new sensor_msgs::CameraInfo());
+    ci->header.frame_id = "kitti";
+    ci->header.stamp = cv_image.header.stamp;
+//    Eigen::Matrix<NumType, 4, 3> P_mat = P.transpose();
+    double* middleP = P.data();
+    for(int iter=0; iter<12; iter++)ci->P[iter] = middleP[iter];
+
+    img_pub.publish(cv_image.toImageMsg(),ci);
 }
 
 void MainWindow::publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc)
@@ -257,8 +276,7 @@ void MainWindow::publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc)
     pcl::toROSMsg(pc, out_pc);
 
     out_pc.header.seq = index_manager.index();
-//    out_pc.header.stamp = ros::Time::now();
-    out_pc.header.stamp = sync_time_;
+    out_pc.header.stamp = ros::Time::now();
     out_pc.header.frame_id = "velodyne";
     pc_pub_.publish(out_pc);
 }
@@ -312,16 +330,16 @@ void MainWindow::on_startButton_clicked()
     if(!ui->startButton->text().compare("play")) {
         ui->startButton->setText("stop");
 
-        delay_ms_ = static_cast<int> (kitti_data_.get_time_diff(index_manager.index())*1000);
+        delay_ms_ = static_cast<int> (kitti_data_.get_time_diff(index_manager.index())*5000);
         int scaled_time = static_cast<int> (static_cast<double>(delay_ms_ ) / speed_);
 
         timer_->start(scaled_time);
 
-//        load_data();
+        load_data();
     }
     else if(!ui->startButton->text().compare("stop")) {
         ui->startButton->setText("play");
-//        timer_->stop();
+        timer_->stop();
     }
 
 }

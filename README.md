@@ -23,7 +23,7 @@ You can change parameters(e.g. data_path, left_topic, left_image_pub ... ) at ru
 For example, 
 
 ```
-rosrun kitti_player kitti_player _data_path:="/var/data/kitti/dataset"
+rosrun kitti_player kitti_player _data_path:="/var/data/kitti/dataset/"
 ```
 
 Roslaunch is also available. A sample of the default launch file is in the 'launch' directory.

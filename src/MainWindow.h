@@ -7,6 +7,7 @@
 #include <QTimer>
 
 #include <ros/ros.h>
+#include <camera_info_manager/camera_info_manager.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <dynamic_reconfigure/server.h>
@@ -98,29 +99,26 @@ private:
     std::string str_left_color_topic_;
     std::string str_right_color_topic_;
     std::string str_velodyne_topic_;
-    std::string str_depth_map_topic_;
 
     bool is_left_image_pub_;
     bool is_right_image_pub_;
     bool is_left_color_image_pub_;
     bool is_right_color_image_pub_;
     bool is_velodyne_pub_;
-    bool is_depth_map_pub_;
 
     ros::NodeHandle nh_;
     ros::Publisher pc_pub_;
 
+//    boost::shared_ptr<image_transport::ImageTransport> it_;
     image_transport::ImageTransport *it_;
-    image_transport::Publisher left_img_pub_;
-    image_transport::Publisher right_img_pub_;
-    image_transport::Publisher left_color_img_pub_;
-    image_transport::Publisher right_color_img_pub_;
-    image_transport::Publisher depth_map_pub_;
+    image_transport::CameraPublisher left_img_pub_;
+    image_transport::CameraPublisher right_img_pub_;
+    image_transport::CameraPublisher left_color_img_pub_;
+    image_transport::CameraPublisher right_color_img_pub_;
 
-    void publish_image(image_transport::Publisher& img_pub, cv::Mat& img);
+    void publish_image(image_transport::CameraPublisher& img_pub, cv::Mat& img, Matrix3x4 P);
     void publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc);
 
-    ros::Time sync_time_;
 
 
 private slots:

@@ -12,6 +12,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <kitti_player/Datatypes.h>
 
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_datatypes.h>
+#include <tf_conversions/tf_eigen.h>
+
 enum VelodyneLayer {
     Layer16,
     Layer64
@@ -43,12 +47,16 @@ public:
 
     PointCloud& velodyne_data() { return velodyne_data_; }
 
+    Eigen::Matrix4d pose_data() { return pose_;}
+
     void set_left_image(int i) { left_image_ = cv::imread(get_abs_path(flist_left_image_, i).toStdString(),CV_LOAD_IMAGE_GRAYSCALE); }
     void set_right_image(int i) { right_image_ = cv::imread(get_abs_path(flist_right_image_, i).toStdString(),CV_LOAD_IMAGE_GRAYSCALE); }
     void set_left_color_image(int i) { left_color_image_ = cv::imread(get_abs_path(flist_left_color_image_, i).toStdString()); }
     void set_right_color_image(int i) { right_color_image_ = cv::imread(get_abs_path(flist_right_color_image_, i).toStdString()); }
 
     void set_velodyne(int i) { read_velodyne(get_abs_path(flist_velodyne_, i)); }
+
+    void set_pose(int i) { pose_ = poses_[i]; }
 
     double get_time_diff(int i) { return times_[i+1]-times_[i]; }
     int data_length() { return times_.size(); }
@@ -87,7 +95,8 @@ private:
     VelodyneLayer velodyne_layer_;
 
     QVector<double> times_;
-    QVector<QMatrix4x4> poses_;
+    std::vector<Eigen::Matrix4d> poses_;
+    Eigen::Matrix4d pose_;
 
     Matrix3x4 P0_, P1_, P2_, P3_;
     Matrix3x4 Tr_;
