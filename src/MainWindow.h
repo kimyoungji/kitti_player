@@ -105,6 +105,7 @@ private:
     bool is_left_color_image_pub_;
     bool is_right_color_image_pub_;
     bool is_velodyne_pub_;
+    bool is_pose_pub_;
 
     ros::NodeHandle nh_;
     ros::Publisher pc_pub_;

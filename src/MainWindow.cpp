@@ -48,7 +48,8 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     private_nh.param("right_image_pub", is_right_image_pub_, true);
     private_nh.param("left_color_image_pub", is_left_color_image_pub_, false);
     private_nh.param("right_color_image_pub", is_right_color_image_pub_, false);
-    private_nh.param("velodyne_pub", is_velodyne_pub_, true);
+    private_nh.param("velodyne_pub", is_velodyne_pub_, false);
+    private_nh.param("pose_pub", is_pose_pub_, false);
 
     cout << "left_color: " << is_left_color_image_pub_ << endl;
 
@@ -185,10 +186,12 @@ void MainWindow::load_data()
     tf::transformEigenToTF(eigen_affine_Tr,transform);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/World", "/kitti/Velodyne"));
 
+    if(is_pose_pub_){
     kitti_data_.set_pose(index_manager.index());
     Eigen::Affine3d eigen_affine_pose(kitti_data_.pose_data());
     tf::transformEigenToTF(eigen_affine_pose,transform);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/World", "/kitti/Current"));
+    }
 
     // increase index
     index_manager.inc();
