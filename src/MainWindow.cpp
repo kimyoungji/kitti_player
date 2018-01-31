@@ -48,8 +48,8 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     private_nh.param("right_image_pub", is_right_image_pub_, true);
     private_nh.param("left_color_image_pub", is_left_color_image_pub_, false);
     private_nh.param("right_color_image_pub", is_right_color_image_pub_, false);
-    private_nh.param("velodyne_pub", is_velodyne_pub_, false);
-    private_nh.param("pose_pub", is_pose_pub_, false);
+    private_nh.param("velodyne_pub", is_velodyne_pub_, true);
+    private_nh.param("pose_pub", is_pose_pub_, true);
 
     cout << "left_color: " << is_left_color_image_pub_ << endl;
 
