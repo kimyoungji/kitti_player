@@ -334,7 +334,8 @@ void MainWindow::on_startButton_clicked()
         ui->startButton->setText("stop");
 
         delay_ms_ = static_cast<int> (kitti_data_.get_time_diff(index_manager.index())*5000);
-        int scaled_time = static_cast<int> (static_cast<double>(delay_ms_ ) / speed_);
+        int scaled_time = 200;
+//        int scaled_time = static_cast<int> (static_cast<double>(delay_ms_ ) / speed_);
 
         timer_->start(scaled_time);
 
