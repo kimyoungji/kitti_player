@@ -60,6 +60,20 @@ void KittiData::set_sequence(QString str_seq)
         times_.push_back(line.toDouble());
     }
 
+    // Read encoder.txt
+    QFile fencoder(seq_path()+"encoder.txt");
+    if (!fencoder.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    QTextStream encoder_stream(&fencoder);
+    while (!encoder_stream.atEnd()) {
+        QString line = encoder_stream.readLine();
+        QStringList list = line.split(" ");
+        Eigen::Vector2i enc;
+        enc<<list[0].toInt(),list[1].toInt();
+        encoders_.push_back(enc);
+    }
+
     // Read ground truth poses
     if(str_seq.toInt() < 11) {
         QFile gt_poses(gt_fname_);
@@ -75,6 +89,7 @@ void KittiData::set_sequence(QString str_seq)
                    list[4].toDouble(), list[5].toDouble(), list[6].toDouble(), list[7].toDouble(),
                    list[8].toDouble(), list[9].toDouble(), list[10].toDouble(), list[11].toDouble(),
                    0,    0,    0,    1;
+
             poses_.push_back(Tgt);
         }
     }

@@ -21,6 +21,8 @@ enum VelodyneLayer {
     Layer64
 };
 
+//Eigen::IOFormat HeavyFmt(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
+
 class KittiData
 {
 public:
@@ -47,6 +49,8 @@ public:
 
     PointCloud& velodyne_data() { return velodyne_data_; }
 
+    Eigen::Vector2i encoder_data() { return encoder_; }
+
     Eigen::Matrix4d pose_data() { return pose_;}
 
     void set_left_image(int i) { left_image_ = cv::imread(get_abs_path(flist_left_image_, i).toStdString(),CV_LOAD_IMAGE_GRAYSCALE); }
@@ -55,6 +59,8 @@ public:
     void set_right_color_image(int i) { right_color_image_ = cv::imread(get_abs_path(flist_right_color_image_, i).toStdString()); }
 
     void set_velodyne(int i) { read_velodyne(get_abs_path(flist_velodyne_, i)); }
+
+    void set_encoder(int i){ encoder_ = encoders_[i]; }
 
     void set_pose(int i) { pose_ = poses_[i]; }
 
@@ -95,6 +101,8 @@ private:
     VelodyneLayer velodyne_layer_;
 
     QVector<double> times_;
+    std::vector<Eigen::Vector2i> encoders_;
+    Eigen::Vector2i encoder_;
     std::vector<Eigen::Matrix4d> poses_;
     Eigen::Matrix4d pose_;
 
