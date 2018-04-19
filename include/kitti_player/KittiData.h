@@ -51,6 +51,10 @@ public:
 
     Eigen::Vector2i encoder_data() { return encoder_; }
 
+    Eigen::Vector3d fog_data() { return fog_;}
+
+    Eigen::Matrix4d imu_pose_data() { return imu_pose_;}
+
     Eigen::Matrix4d pose_data() { return pose_;}
 
     void set_left_image(int i) { left_image_ = cv::imread(get_abs_path(flist_left_image_, i).toStdString(),CV_LOAD_IMAGE_GRAYSCALE); }
@@ -61,6 +65,10 @@ public:
     void set_velodyne(int i) { read_velodyne(get_abs_path(flist_velodyne_, i)); }
 
     void set_encoder(int i){ encoder_ = encoders_[i]; }
+
+    void set_fog(int i) { fog_ = fogs_[i]; }
+
+    void set_imu_pose(int i) { imu_pose_ = imu_poses_[i]; }
 
     void set_pose(int i) { pose_ = poses_[i]; }
 
@@ -103,6 +111,10 @@ private:
     QVector<double> times_;
     std::vector<Eigen::Vector2i> encoders_;
     Eigen::Vector2i encoder_;
+    std::vector<Eigen::Vector3d> fogs_;
+    Eigen::Vector3d fog_;
+    std::vector<Eigen::Matrix4d> imu_poses_;
+    Eigen::Matrix4d imu_pose_;
     std::vector<Eigen::Matrix4d> poses_;
     Eigen::Matrix4d pose_;
 

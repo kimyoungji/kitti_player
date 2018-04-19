@@ -43,14 +43,17 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     private_nh.param("left_color_topic", str_left_color_topic_, std::string("/kitti/left_color_image"));
     private_nh.param("right_color_topic", str_right_color_topic_, std::string("/kitti/right_color_image"));
     private_nh.param("velodyne_topic", str_velodyne_topic_, std::string("/kitti/velodyne_points"));
+    private_nh.param("fog_topic", str_fog_topic_, std::string("/kitti/fog"));
     private_nh.param("encoder_topic", str_encoder_topic_, std::string("/kitti/encoder_count"));
 
     private_nh.param("left_image_pub", is_left_image_pub_, true);
     private_nh.param("right_image_pub", is_right_image_pub_, true);
     private_nh.param("left_color_image_pub", is_left_color_image_pub_, false);
     private_nh.param("right_color_image_pub", is_right_color_image_pub_, false);
-    private_nh.param("velodyne_pub", is_velodyne_pub_, true);
+    private_nh.param("velodyne_pub", is_velodyne_pub_, false);
     private_nh.param("pose_pub", is_pose_pub_, true);
+    private_nh.param("imu_pose_pub", is_imu_pose_pub_, false);
+    private_nh.param("fog_pub", is_fog_pub_, true);
     private_nh.param("encoder_pub", is_encoder_pub_, true);
 
     cout << "left_color: " << is_left_color_image_pub_ << endl;
@@ -68,6 +71,8 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     right_color_img_pub_ = it_->advertiseCamera(str_right_color_topic_, 10);
 
     pc_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(str_velodyne_topic_, 10);
+
+    fog_pub_ = nh_.advertise<irp_sen_msgs::fog_3axis>(str_fog_topic_,10);
 
     enc_pub_ = nh_.advertise<irp_sen_msgs::encoder>(str_encoder_topic_,10);
 
@@ -163,6 +168,11 @@ void MainWindow::load_data()
         publish_encoder(enc_pub_, kitti_data_.encoder_data());
     }
 
+    if(is_fog_pub_){
+        kitti_data_.set_fog(index_manager.index());
+        publish_fog(fog_pub_, kitti_data_.fog_data());
+    }
+
     // progress slider
     ui->dataProgress->setValue(index_manager.index());
 
@@ -202,6 +212,13 @@ void MainWindow::load_data()
 //    cout<<eigen_affine_pose.matrix()<<endl;
     tf::transformEigenToTF(eigen_affine_pose,transform);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/World", "/kitti/Current"));
+    }
+    
+    if(is_imu_pose_pub_){
+    kitti_data_.set_imu_pose(index_manager.index());
+    Eigen::Affine3d eigen_affine_pose(kitti_data_.imu_pose_data());
+    tf::transformEigenToTF(eigen_affine_pose,transform);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/World", "/kitti/IMU"));
     }
     
 
@@ -304,6 +321,17 @@ void MainWindow::publish_encoder(ros::Publisher& enc_pub, Eigen::Vector2i enc)
     out_enc.left_count = enc(0);
     out_enc.right_count = enc(1);
     enc_pub.publish(out_enc);
+}
+
+void MainWindow::publish_fog(ros::Publisher& fog_pub, Eigen::Vector3d fog)
+{
+    irp_sen_msgs::fog_3axis out_fog;
+    out_fog.header.stamp = (ros::Time::now());
+    out_fog.header.frame_id = "fog";
+    out_fog.d_roll = fog(0);
+    out_fog.d_pitch = fog(1);
+    out_fog.d_yaw = fog(2);
+    fog_pub.publish(out_fog);
 }
 
 void MainWindow::set_pixmap()

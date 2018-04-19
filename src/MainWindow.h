@@ -17,6 +17,7 @@
 #include <kitti_player/Datatypes.h>
 
 #include <irp_sen_msgs/encoder.h>
+#include <irp_sen_msgs/fog_3axis.h>
 
 using namespace std;
 
@@ -102,6 +103,7 @@ private:
     std::string str_right_color_topic_;
     std::string str_velodyne_topic_;
     std::string str_encoder_topic_;
+    std::string str_fog_topic_;
 
     bool is_left_image_pub_;
     bool is_right_image_pub_;
@@ -109,11 +111,14 @@ private:
     bool is_right_color_image_pub_;
     bool is_velodyne_pub_;
     bool is_pose_pub_;
+    bool is_fog_pub_;
+    bool is_imu_pose_pub_;
     bool is_encoder_pub_;
 
     ros::NodeHandle nh_;
     ros::Publisher pc_pub_;
-    ros::Publisher enc_pub_;
+    ros::Publisher enc_pub_;    
+    ros::Publisher fog_pub_;
 
 //    boost::shared_ptr<image_transport::ImageTransport> it_;
     image_transport::ImageTransport *it_;
@@ -124,7 +129,8 @@ private:
 
     void publish_image(image_transport::CameraPublisher& img_pub, cv::Mat& img, Matrix3x4 P);
     void publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc);
-    void publish_encoder(ros::Publisher& enc_pub, Eigen::Vector2i enc);
+    void publish_encoder(ros::Publisher& enc_pub, Eigen::Vector2i enc);    
+    void publish_fog(ros::Publisher& fog_pub, Eigen::Vector3d fog);
 
 
 private slots:

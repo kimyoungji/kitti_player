@@ -74,6 +74,37 @@ void KittiData::set_sequence(QString str_seq)
         encoders_.push_back(enc);
     }
 
+    // Read fog.txt
+    QFile ffog(seq_path()+"fog.txt");
+    if (!ffog.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    QTextStream fog_stream(&ffog);
+    while (!fog_stream.atEnd()) {
+        QString line = fog_stream.readLine();
+        QStringList list = line.split(" ");
+        Eigen::Vector3d fog;
+        fog << list[0].toDouble(), list[1].toDouble(), list[2].toDouble();
+        fogs_.push_back(fog);
+    }
+
+    // Read imu_pose.txt
+    QFile fimu_pose(seq_path()+"imu_pose.txt");
+    if (!fimu_pose.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    QTextStream imu_pose_stream(&fimu_pose);
+    while (!imu_pose_stream.atEnd()) {
+        QString line = imu_pose_stream.readLine();
+        QStringList list = line.split(" ");
+        Eigen::Matrix4d Tgt;
+        Tgt << list[0].toDouble(), list[1].toDouble(), list[2].toDouble(), list[3].toDouble(),
+               list[4].toDouble(), list[5].toDouble(), list[6].toDouble(), list[7].toDouble(),
+               list[8].toDouble(), list[9].toDouble(), list[10].toDouble(), list[11].toDouble(),
+               0,    0,    0,    1;
+        imu_poses_.push_back(Tgt);
+    }
+
     // Read ground truth poses
     if(str_seq.toInt() < 11) {
         QFile gt_poses(gt_fname_);
