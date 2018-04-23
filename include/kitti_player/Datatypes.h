@@ -6,6 +6,7 @@
 
 typedef double NumType;
 typedef Eigen::Matrix<NumType, 3, 4> Matrix3x4;
+typedef Eigen::Matrix<NumType, 1, 6> Vector6d;
 
 typedef pcl::PointXYZI Point;
 typedef pcl::PointCloud<Point> PointCloud;

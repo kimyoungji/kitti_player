@@ -48,12 +48,13 @@ public:
     cv::Mat& right_color_image() { return right_color_image_; }
 
     PointCloud& velodyne_data() { return velodyne_data_; }
+    Vector6d imu_data() { return imu_;}
 
-    Eigen::Vector2i encoder_data() { return encoder_; }
+//    Eigen::Vector2i encoder_data() { return encoder_; }
 
-    Eigen::Vector3d fog_data() { return fog_;}
+//    Eigen::Vector3d fog_data() { return fog_;}
 
-    Eigen::Matrix4d imu_pose_data() { return imu_pose_;}
+//    Eigen::Matrix4d imu_pose_data() { return imu_pose_;}
 
     Eigen::Matrix4d pose_data() { return pose_;}
 
@@ -63,16 +64,19 @@ public:
     void set_right_color_image(int i) { right_color_image_ = cv::imread(get_abs_path(flist_right_color_image_, i).toStdString()); }
 
     void set_velodyne(int i) { read_velodyne(get_abs_path(flist_velodyne_, i)); }
+    void set_imu(int i) { imu_ = imus_[i]; }
 
-    void set_encoder(int i){ encoder_ = encoders_[i]; }
+//    void set_encoder(int i){ encoder_ = encoders_[i]; }
 
-    void set_fog(int i) { fog_ = fogs_[i]; }
+//    void set_fog(int i) { fog_ = fogs_[i]; }
 
-    void set_imu_pose(int i) { imu_pose_ = imu_poses_[i]; }
+//    void set_imu_pose(int i) { imu_pose_ = imu_poses_[i]; }
 
     void set_pose(int i) { pose_ = poses_[i]; }
 
     double get_time_diff(int i) { return times_[i+1]-times_[i]; }
+    double get_time(int i) { return times_[i]; }
+    double get_imu_time(int i) { return imu_times_[i]; }
     int data_length() { return times_.size(); }
 
     Matrix3x4& P0() { return P0_; }
@@ -109,12 +113,15 @@ private:
     VelodyneLayer velodyne_layer_;
 
     QVector<double> times_;
-    std::vector<Eigen::Vector2i> encoders_;
-    Eigen::Vector2i encoder_;
-    std::vector<Eigen::Vector3d> fogs_;
-    Eigen::Vector3d fog_;
-    std::vector<Eigen::Matrix4d> imu_poses_;
-    Eigen::Matrix4d imu_pose_;
+    QVector<double> imu_times_;
+//    std::vector<Eigen::Vector2i> encoders_;
+//    Eigen::Vector2i encoder_;
+//    std::vector<Eigen::Vector3d> fogs_;
+//    Eigen::Vector3d fog_;
+//    std::vector<Eigen::Matrix4d> imu_poses_;
+//    Eigen::Matrix4d imu_pose_;
+    std::vector<Vector6d> imus_;
+    Vector6d imu_;
     std::vector<Eigen::Matrix4d> poses_;
     Eigen::Matrix4d pose_;
 
