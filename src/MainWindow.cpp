@@ -43,20 +43,13 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     private_nh.param("left_color_topic", str_left_color_topic_, std::string("/kitti/left_color_image"));
     private_nh.param("right_color_topic", str_right_color_topic_, std::string("/kitti/right_color_image"));
     private_nh.param("velodyne_topic", str_velodyne_topic_, std::string("/kitti/velodyne_points"));
-    private_nh.param("imu_topic", str_imu_topic_, std::string("/kitti/imu"));
-//    private_nh.param("fog_topic", str_fog_topic_, std::string("/kitti/fog"));
-//    private_nh.param("encoder_topic", str_encoder_topic_, std::string("/kitti/encoder_count"));
 
     private_nh.param("left_image_pub", is_left_image_pub_, true);
     private_nh.param("right_image_pub", is_right_image_pub_, true);
-    private_nh.param("left_color_image_pub", is_left_color_image_pub_, false);
-    private_nh.param("right_color_image_pub", is_right_color_image_pub_, false);
+    private_nh.param("left_color_image_pub", is_left_color_image_pub_, true);
+    private_nh.param("right_color_image_pub", is_right_color_image_pub_, true);
     private_nh.param("velodyne_pub", is_velodyne_pub_, false);
     private_nh.param("pose_pub", is_pose_pub_, true);
-    private_nh.param("imu_pub", is_imu_pub_, false);
-//    private_nh.param("imu_pose_pub", is_imu_pose_pub_, true);
-//    private_nh.param("fog_pub", is_fog_pub_, true);
-//    private_nh.param("encoder_pub", is_encoder_pub_, true);
 
     cout << "left_color: " << is_left_color_image_pub_ << endl;
 
@@ -69,16 +62,10 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     it_ = new image_transport::ImageTransport(nh_);
     left_img_pub_ = it_->advertiseCamera(str_left_topic_, 10);
     right_img_pub_ = it_->advertiseCamera(str_right_topic_, 10);
-    left_color_img_pub_ = it_->advertiseCamera(str_left_color_topic_, 10);
-    right_color_img_pub_ = it_->advertiseCamera(str_right_color_topic_, 10);
+    left_color_img_pub_ = it_->advertise(str_left_color_topic_, 10);
+    right_color_img_pub_ = it_->advertise(str_right_color_topic_, 10);
 
     pc_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(str_velodyne_topic_, 10);
-
-//    imu_pub_ = nh_.advertise<sensor_msgs::Imu>(str_imu_topic_,10);
-
-//    fog_pub_ = nh_.advertise<irp_sen_msgs::fog_3axis>(str_fog_topic_,10);
-
-//    enc_pub_ = nh_.advertise<irp_sen_msgs::encoder>(str_encoder_topic_,10);
 
     f_ = boost::bind(&MainWindow::dynamic_parameter_callback, this, _1, _2);
     server_.setCallback(f_);
@@ -117,7 +104,6 @@ void MainWindow::reset_sequence()
     kitti_data_.set_sequence(str_seq_);
 
     index_manager.init();
-//    imu_index_manager.init();
 
     // For slider bar
     ui->dataProgress->setMaximum(kitti_data_.data_length());
@@ -129,15 +115,6 @@ void MainWindow::load_data()
 
     if(ui->layerSelector64->isChecked()) kitti_data_.velodyne_layer(Layer64);
     if(ui->layerSelector16->isChecked()) kitti_data_.velodyne_layer(Layer16);
-
-//    // Setting data and Publish
-//    if(is_imu_pub_) {
-//        while(kitti_data_.get_imu_time(imu_index_manager.index())<kitti_data_.get_time(index_manager.index())) {   
-//            kitti_data_.set_imu(imu_index_manager.index());
-//            publish_imu(imu_pub_, kitti_data_.imu_data(), kitti_data_.get_imu_time(imu_index_manager.index()));
-//            imu_index_manager.inc();
-//        }
-//    }
 
     if(is_left_image_pub_) {
         kitti_data_.set_left_image(index_manager.index());
@@ -151,11 +128,11 @@ void MainWindow::load_data()
 
     if(is_left_color_image_pub_) {
         kitti_data_.set_left_color_image(index_manager.index());
-        publish_image(left_color_img_pub_, kitti_data_.left_color_image(), kitti_data_.P2());
+        publish_image(left_color_img_pub_, kitti_data_.left_color_image());
     }
     if(is_right_color_image_pub_) {
         kitti_data_.set_right_color_image(index_manager.index());
-        publish_image(right_color_img_pub_, kitti_data_.right_color_image(), kitti_data_.P3());
+        publish_image(right_color_img_pub_, kitti_data_.right_color_image());
     }
 
     if(is_velodyne_pub_) {
@@ -163,16 +140,6 @@ void MainWindow::load_data()
         publish_velodyne(pc_pub_, kitti_data_.velodyne_data());
     }
 
-
-//    if(is_encoder_pub_){
-//        kitti_data_.set_encoder(index_manager.index());
-//        publish_encoder(enc_pub_, kitti_data_.encoder_data());
-//    }
-
-//    if(is_fog_pub_){
-//        kitti_data_.set_fog(index_manager.index());
-//        publish_fog(fog_pub_, kitti_data_.fog_data());
-//    }
 
     // progress slider
     ui->dataProgress->setValue(index_manager.index());
@@ -212,14 +179,6 @@ void MainWindow::load_data()
     tf::transformEigenToTF(eigen_affine_pose,transform);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/World", "/kitti/Current"));
     }
- 
-//    if(is_imu_pose_pub_){
-//    kitti_data_.set_imu_pose(index_manager.index());
-//    Eigen::Affine3d eigen_affine_pose(kitti_data_.imu_pose_data());
-//    tf::transformEigenToTF(eigen_affine_pose,transform);
-//    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/World", "/kitti/IMU"));
-//    }
-    
 
     // increase index
     index_manager.inc();
@@ -249,6 +208,26 @@ void MainWindow::publish_image(image_transport::CameraPublisher& img_pub, cv::Ma
     img_pub.publish(cv_image.toImageMsg(),ci);
 }
 
+void MainWindow::publish_image(image_transport::Publisher& img_pub, cv::Mat& img)
+{
+    cv_bridge::CvImage cv_image;
+    cv_image.header.seq = index_manager.index();
+    cv_image.header.stamp = ros::Time::now();
+//    cv_image.header.stamp = sync_time_;
+    cv_image.header.frame_id = "kitti";
+    if(img.type() == CV_8UC1)
+        cv_image.encoding = sensor_msgs::image_encodings::MONO8;
+    else if(img.type() == CV_8UC3)
+        cv_image.encoding = sensor_msgs::image_encodings::BGR8;
+    else if(img.type() == CV_32F)
+        cv_image.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+
+    cv_image.image = img;
+
+    img_pub.publish(cv_image.toImageMsg());
+}
+
+
 void MainWindow::publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc)
 {
     sensor_msgs::PointCloud2 out_pc;
@@ -259,40 +238,7 @@ void MainWindow::publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc)
     out_pc.header.frame_id = "velodyne";
     pc_pub_.publish(out_pc);
 }
-void MainWindow::publish_imu(ros::Publisher& imu_pub, Vector6d imu, double time)
-{
-    sensor_msgs::Imu out_imu;
-    ros::Time t(time);
-    out_imu.header.stamp = t;
-    out_imu.header.frame_id = "imu";
-    out_imu.angular_velocity.x = imu(0);
-    out_imu.angular_velocity.y = imu(1);
-    out_imu.angular_velocity.z = imu(2);
-    out_imu.linear_acceleration.x = imu(3);
-    out_imu.linear_acceleration.y = imu(4);
-    out_imu.linear_acceleration.z = imu(5);
-    imu_pub.publish(out_imu);    
-}
-//void MainWindow::publish_encoder(ros::Publisher& enc_pub, Eigen::Vector2i enc)
-//{
-//    irp_sen_msgs::encoder out_enc;
-//    out_enc.header.stamp = (ros::Time::now());
-//    out_enc.header.frame_id = "encoder";
-//    out_enc.left_count = enc(0);
-//    out_enc.right_count = enc(1);
-//    enc_pub.publish(out_enc);
-//}
 
-//void MainWindow::publish_fog(ros::Publisher& fog_pub, Eigen::Vector3d fog)
-//{
-//    irp_sen_msgs::fog_3axis out_fog;
-//    out_fog.header.stamp = (ros::Time::now());
-//    out_fog.header.frame_id = "fog";
-//    out_fog.d_roll = fog(0);
-//    out_fog.d_pitch = fog(1);
-//    out_fog.d_yaw = fog(2);
-//    fog_pub.publish(out_fog);
-//}
 
 void MainWindow::set_pixmap()
 {

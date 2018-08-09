@@ -92,11 +92,6 @@ private:
     void reset_sequence();
     void load_data();
 
-//    inline const QString& sequence_path() { return data_path_+"sequences/"+str_seq_+"/"; }
-//    inline const QString& gt_fname() { return data_path_+"poses/"+str_seq_+".txt"; }
-//    camlidar::CamLidarCalib::Ptr camlidar_calib_;
-//    std::thread camlidar_thread_;
-
     QPixmap image_;
 
     std::string str_path_;
@@ -106,8 +101,6 @@ private:
     std::string str_right_color_topic_;
     std::string str_velodyne_topic_;
     std::string str_imu_topic_;
-//    std::string str_encoder_topic_;
-//    std::string str_fog_topic_;
 
     bool is_left_image_pub_;
     bool is_right_image_pub_;
@@ -115,29 +108,21 @@ private:
     bool is_right_color_image_pub_;
     bool is_velodyne_pub_;
     bool is_pose_pub_;
-    bool is_imu_pub_;
-//    bool is_fog_pub_;
-//    bool is_imu_pose_pub_;
-//    bool is_encoder_pub_;
 
     ros::NodeHandle nh_;
     ros::Publisher pc_pub_;
-    ros::Publisher imu_pub_;
-//    ros::Publisher enc_pub_;    
-//    ros::Publisher fog_pub_;
 
-//    boost::shared_ptr<image_transport::ImageTransport> it_;
     image_transport::ImageTransport *it_;
     image_transport::CameraPublisher left_img_pub_;
     image_transport::CameraPublisher right_img_pub_;
-    image_transport::CameraPublisher left_color_img_pub_;
-    image_transport::CameraPublisher right_color_img_pub_;
+//    image_transport::CameraPublisher left_color_img_pub_;
+//    image_transport::CameraPublisher right_color_img_pub_;
+    image_transport::Publisher left_color_img_pub_;
+    image_transport::Publisher right_color_img_pub_;
 
     void publish_image(image_transport::CameraPublisher& img_pub, cv::Mat& img, Matrix3x4 P);
+    void publish_image(image_transport::Publisher& img_pub, cv::Mat& img);
     void publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc);
-    void publish_imu(ros::Publisher& imu_pub, Vector6d imu, double time);
-//    void publish_encoder(ros::Publisher& enc_pub, Eigen::Vector2i enc);    
-//    void publish_fog(ros::Publisher& fog_pub, Eigen::Vector3d fog);
 
 
 private slots:
