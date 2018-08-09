@@ -61,30 +61,30 @@ void KittiData::set_sequence(QString str_seq)
         times_.push_back(line.toDouble());
     }
 
-    // Read imu_times.txt
-    QFile fimutimes(seq_path()+"imu_times.txt");
-    if (!fimutimes.open(QIODevice::ReadOnly | QIODevice::Text))
-        return;
+//    // Read imu_times.txt
+//    QFile fimutimes(seq_path()+"imu_times.txt");
+//    if (!fimutimes.open(QIODevice::ReadOnly | QIODevice::Text))
+//        return;
 
-    QTextStream imu_times_stream(&fimutimes);
-    while (!imu_times_stream.atEnd()) {
-        QString line = imu_times_stream.readLine();
-        imu_times_.push_back(line.toDouble());
-    }
+//    QTextStream imu_times_stream(&fimutimes);
+//    while (!imu_times_stream.atEnd()) {
+//        QString line = imu_times_stream.readLine();
+//        imu_times_.push_back(line.toDouble());
+//    }
 
-    // Read imu.txt
-    QFile fimu(seq_path()+"imu.txt");
-    if (!fimu.open(QIODevice::ReadOnly | QIODevice::Text))
-        return;
+//    // Read imu.txt
+//    QFile fimu(seq_path()+"imu.txt");
+//    if (!fimu.open(QIODevice::ReadOnly | QIODevice::Text))
+//        return;
 
-    QTextStream imu_stream(&fimu);
-    while (!imu_stream.atEnd()) {
-        QString line = imu_stream.readLine();
-        QStringList list = line.split(" ");
-        Vector6d imu;
-        imu << list[0].toDouble(), list[1].toDouble(), list[2].toDouble(),list[3].toDouble(), list[4].toDouble(), list[5].toDouble();
-        imus_.push_back(imu);
-    }    
+//    QTextStream imu_stream(&fimu);
+//    while (!imu_stream.atEnd()) {
+//        QString line = imu_stream.readLine();
+//        QStringList list = line.split(" ");
+//        Vector6d imu;
+//        imu << list[0].toDouble(), list[1].toDouble(), list[2].toDouble(),list[3].toDouble(), list[4].toDouble(), list[5].toDouble();
+//        imus_.push_back(imu);
+//    }    
 
 //    // Read encoder.txt
 //    QFile fencoder(seq_path()+"encoder.txt");
@@ -136,7 +136,6 @@ void KittiData::set_sequence(QString str_seq)
         QFile gt_poses(gt_fname_);
         if (!gt_poses.open(QIODevice::ReadOnly | QIODevice::Text))
             return;
-
         QTextStream poses_stream(&gt_poses);
         while (!poses_stream.atEnd()) {
             QString line = poses_stream.readLine();
@@ -155,11 +154,9 @@ void KittiData::set_sequence(QString str_seq)
     QFile fcalib(calib_fname_);
     if (!fcalib.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
-
     QTextStream fcalib_stream(&fcalib);
     vector<Matrix3x4> vec_calib_matrix;
     int calib_mat_idx=0;
-
     while (!fcalib_stream.atEnd()) {
         QString line = fcalib_stream.readLine();
         QStringList list = line.split(" ");
@@ -171,7 +168,6 @@ void KittiData::set_sequence(QString str_seq)
 
         vec_calib_matrix.push_back(calib_mat);
     }
-
     P0_ = vec_calib_matrix[0];
     P1_ = vec_calib_matrix[1];
     P2_ = vec_calib_matrix[2];

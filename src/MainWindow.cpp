@@ -53,7 +53,7 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     private_nh.param("right_color_image_pub", is_right_color_image_pub_, false);
     private_nh.param("velodyne_pub", is_velodyne_pub_, false);
     private_nh.param("pose_pub", is_pose_pub_, true);
-    private_nh.param("imu_pub", is_imu_pub_, true);
+    private_nh.param("imu_pub", is_imu_pub_, false);
 //    private_nh.param("imu_pose_pub", is_imu_pose_pub_, true);
 //    private_nh.param("fog_pub", is_fog_pub_, true);
 //    private_nh.param("encoder_pub", is_encoder_pub_, true);
@@ -74,7 +74,7 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
 
     pc_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(str_velodyne_topic_, 10);
 
-    imu_pub_ = nh_.advertise<sensor_msgs::Imu>(str_imu_topic_,10);
+//    imu_pub_ = nh_.advertise<sensor_msgs::Imu>(str_imu_topic_,10);
 
 //    fog_pub_ = nh_.advertise<irp_sen_msgs::fog_3axis>(str_fog_topic_,10);
 
@@ -117,7 +117,7 @@ void MainWindow::reset_sequence()
     kitti_data_.set_sequence(str_seq_);
 
     index_manager.init();
-    imu_index_manager.init();
+//    imu_index_manager.init();
 
     // For slider bar
     ui->dataProgress->setMaximum(kitti_data_.data_length());
@@ -130,7 +130,15 @@ void MainWindow::load_data()
     if(ui->layerSelector64->isChecked()) kitti_data_.velodyne_layer(Layer64);
     if(ui->layerSelector16->isChecked()) kitti_data_.velodyne_layer(Layer16);
 
-    // Setting data and Publish
+//    // Setting data and Publish
+//    if(is_imu_pub_) {
+//        while(kitti_data_.get_imu_time(imu_index_manager.index())<kitti_data_.get_time(index_manager.index())) {   
+//            kitti_data_.set_imu(imu_index_manager.index());
+//            publish_imu(imu_pub_, kitti_data_.imu_data(), kitti_data_.get_imu_time(imu_index_manager.index()));
+//            imu_index_manager.inc();
+//        }
+//    }
+
     if(is_left_image_pub_) {
         kitti_data_.set_left_image(index_manager.index());
         publish_image(left_img_pub_, kitti_data_.left_image(), kitti_data_.P0());
@@ -155,13 +163,6 @@ void MainWindow::load_data()
         publish_velodyne(pc_pub_, kitti_data_.velodyne_data());
     }
 
-    if(is_imu_pub_) {
-        while(kitti_data_.get_imu_time(imu_index_manager.index())<kitti_data_.get_time(index_manager.index())) {   
-            kitti_data_.set_imu(imu_index_manager.index());
-            publish_imu(imu_pub_, kitti_data_.imu_data(), kitti_data_.get_imu_time(imu_index_manager.index()));
-            imu_index_manager.inc();
-        }
-    }
 
 //    if(is_encoder_pub_){
 //        kitti_data_.set_encoder(index_manager.index());
@@ -211,7 +212,7 @@ void MainWindow::load_data()
     tf::transformEigenToTF(eigen_affine_pose,transform);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/kitti/World", "/kitti/Current"));
     }
-    
+ 
 //    if(is_imu_pose_pub_){
 //    kitti_data_.set_imu_pose(index_manager.index());
 //    Eigen::Affine3d eigen_affine_pose(kitti_data_.imu_pose_data());
@@ -343,7 +344,7 @@ void MainWindow::on_startButton_clicked()
         ui->startButton->setText("stop");
 
         delay_ms_ = static_cast<int> (kitti_data_.get_time_diff(index_manager.index())*5000);
-        int scaled_time = 200;
+        int scaled_time = 500;
 //        int scaled_time = static_cast<int> (static_cast<double>(delay_ms_ ) / speed_);
 
         timer_->start(scaled_time);
