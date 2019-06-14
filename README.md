@@ -6,7 +6,7 @@ This rpository has source code for publishing kitti odometry datasets to ros top
 
 ```
 cd ~/catkin_ws/src
-git clone https://github.com/youngsikshin/kitti_player.git
+git clone https://github.com/kimyoungji/kitti_player.git
 cd ~/catkin_ws
 catkin_make
 ```
@@ -63,8 +63,4 @@ And kitti_player needs a directory tree like the following:
     │ └── ...
     └─└── 21
 ```
-
-## TODO
-
-* Publish GT poses
 
