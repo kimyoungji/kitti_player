@@ -43,12 +43,14 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     private_nh.param("left_color_topic", str_left_color_topic_, std::string("/kitti/left_color_image"));
     private_nh.param("right_color_topic", str_right_color_topic_, std::string("/kitti/right_color_image"));
     private_nh.param("velodyne_topic", str_velodyne_topic_, std::string("/kitti/velodyne_points"));
+    private_nh.param("imu_topic", str_imu_topic_, std::string("/kitti/imu"));
 
     private_nh.param("left_image_pub", is_left_image_pub_, true);
     private_nh.param("right_image_pub", is_right_image_pub_, true);
     private_nh.param("left_color_image_pub", is_left_color_image_pub_, true);
     private_nh.param("right_color_image_pub", is_right_color_image_pub_, true);
     private_nh.param("velodyne_pub", is_velodyne_pub_, false);
+    private_nh.param("imu_pub", is_imu_pub_, false);
     private_nh.param("pose_pub", is_pose_pub_, true);
 
     cout << "left_color: " << is_left_color_image_pub_ << endl;
@@ -62,10 +64,11 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     it_ = new image_transport::ImageTransport(nh_);
     left_img_pub_ = it_->advertiseCamera(str_left_topic_, 10);
     right_img_pub_ = it_->advertiseCamera(str_right_topic_, 10);
-    left_color_img_pub_ = it_->advertise(str_left_color_topic_, 10);
-    right_color_img_pub_ = it_->advertise(str_right_color_topic_, 10);
+    left_color_img_pub_ = it_->advertiseCamera(str_left_color_topic_, 10);
+    right_color_img_pub_ = it_->advertiseCamera(str_right_color_topic_, 10);
 
     pc_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(str_velodyne_topic_, 10);
+    imu_pub_ = nh_.advertise<sensor_msgs::Imu>(str_imu_topic_, 10);
 
     f_ = boost::bind(&MainWindow::dynamic_parameter_callback, this, _1, _2);
     server_.setCallback(f_);
@@ -104,6 +107,7 @@ void MainWindow::reset_sequence()
     kitti_data_.set_sequence(str_seq_);
 
     index_manager.init();
+    imu_index_manager.init();
 
     // For slider bar
     ui->dataProgress->setMaximum(kitti_data_.data_length());
@@ -128,16 +132,24 @@ void MainWindow::load_data()
 
     if(is_left_color_image_pub_) {
         kitti_data_.set_left_color_image(index_manager.index());
-        publish_image(left_color_img_pub_, kitti_data_.left_color_image());
+        publish_image(left_color_img_pub_, kitti_data_.left_color_image(), kitti_data_.P2());
     }
     if(is_right_color_image_pub_) {
         kitti_data_.set_right_color_image(index_manager.index());
-        publish_image(right_color_img_pub_, kitti_data_.right_color_image());
+        publish_image(right_color_img_pub_, kitti_data_.right_color_image(), kitti_data_.P3());
     }
 
     if(is_velodyne_pub_) {
         kitti_data_.set_velodyne(index_manager.index());
         publish_velodyne(pc_pub_, kitti_data_.velodyne_data());
+    }
+    if(is_imu_pub_) {
+        while( kitti_data_.get_imu_time(imu_index_manager.index())<kitti_data_.get_time(index_manager.index()) )
+        {
+            kitti_data_.set_imu(imu_index_manager.index());
+            publish_imu(imu_pub_, kitti_data_.imu_data());
+            imu_index_manager.inc();
+        }
     }
 
 
@@ -182,6 +194,7 @@ void MainWindow::load_data()
 
     // increase index
     index_manager.inc();
+//    imu_index_manager.inc();
 
 }
 
@@ -239,6 +252,22 @@ void MainWindow::publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc)
     pc_pub_.publish(out_pc);
 }
 
+void MainWindow::publish_imu(ros::Publisher& imu_pub, Vector6d imu_data)
+{
+    sensor_msgs::Imu out_imu;
+    out_imu.linear_acceleration.x = imu_data[0];
+    out_imu.linear_acceleration.y = imu_data[1];
+    out_imu.linear_acceleration.z = imu_data[2];
+    out_imu.angular_velocity.x = imu_data[3];
+    out_imu.angular_velocity.y = imu_data[4];
+    out_imu.angular_velocity.z = imu_data[5];
+
+
+    out_imu.header.seq = imu_index_manager.index();
+    out_imu.header.stamp = ros::Time::now();
+    out_imu.header.frame_id = "imu";
+    imu_pub_.publish(out_imu);
+}
 
 void MainWindow::set_pixmap()
 {
@@ -290,7 +319,7 @@ void MainWindow::on_startButton_clicked()
         ui->startButton->setText("stop");
 
         delay_ms_ = static_cast<int> (kitti_data_.get_time_diff(index_manager.index())*5000);
-        int scaled_time = 500;
+        int scaled_time = 200;
 //        int scaled_time = static_cast<int> (static_cast<double>(delay_ms_ ) / speed_);
 
         timer_->start(scaled_time);

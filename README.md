@@ -25,8 +25,11 @@ For example,
 ```
 rosrun kitti_player kitti_player _data_path:="/var/data/kitti/dataset/"
 rosrun kitti_player kitti_player _data_path:="/media/youngji/storagedevice/naver_data/kitti_odometry/dataset/" _velodyne_pub:=true _pose_pub:=true
+
 rosrun kitti_player kitti_player _data_path:="/media/youngji/storagedevice/naver_data/20180125_kitti/" _velodyne_pub:=false _pose_pub:=true
 rosrun kitti_player kitti_player _data_path:="/media/youngji/storagedevice/naver_data/20180411_kitti/" _velodyne_pub:=false _pose_pub:=true
+
+rosrun kitti_player kitti_player _data_path:="/media/irap/storagedevice/kitti_odometry/dataset/" _velodyne_pub:=true _pose_pub:=true
 
 ```
 

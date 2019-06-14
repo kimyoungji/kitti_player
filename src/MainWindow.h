@@ -107,22 +107,23 @@ private:
     bool is_left_color_image_pub_;
     bool is_right_color_image_pub_;
     bool is_velodyne_pub_;
+    bool is_imu_pub_;
     bool is_pose_pub_;
 
     ros::NodeHandle nh_;
     ros::Publisher pc_pub_;
+    ros::Publisher imu_pub_;
 
     image_transport::ImageTransport *it_;
     image_transport::CameraPublisher left_img_pub_;
     image_transport::CameraPublisher right_img_pub_;
-//    image_transport::CameraPublisher left_color_img_pub_;
-//    image_transport::CameraPublisher right_color_img_pub_;
-    image_transport::Publisher left_color_img_pub_;
-    image_transport::Publisher right_color_img_pub_;
+    image_transport::CameraPublisher left_color_img_pub_;
+    image_transport::CameraPublisher right_color_img_pub_;
 
     void publish_image(image_transport::CameraPublisher& img_pub, cv::Mat& img, Matrix3x4 P);
     void publish_image(image_transport::Publisher& img_pub, cv::Mat& img);
     void publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc);
+    void publish_imu(ros::Publisher& imu_pub, Vector6d imu);
 
 
 private slots:

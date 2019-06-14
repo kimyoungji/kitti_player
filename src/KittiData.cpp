@@ -31,6 +31,7 @@ void KittiData::set_sequence(QString str_seq)
 {
     times_.clear();
     imu_times_.clear();
+    imus_.clear();
     poses_.clear();
 
     str_seq_ = str_seq;
@@ -61,30 +62,30 @@ void KittiData::set_sequence(QString str_seq)
         times_.push_back(line.toDouble());
     }
 
-//    // Read imu_times.txt
-//    QFile fimutimes(seq_path()+"imu_times.txt");
-//    if (!fimutimes.open(QIODevice::ReadOnly | QIODevice::Text))
-//        return;
+    // Read imu_times.txt
+    QFile fimutimes(seq_path()+"imu/imu_times.txt");
+    if (!fimutimes.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
 
-//    QTextStream imu_times_stream(&fimutimes);
-//    while (!imu_times_stream.atEnd()) {
-//        QString line = imu_times_stream.readLine();
-//        imu_times_.push_back(line.toDouble());
-//    }
+    QTextStream imu_times_stream(&fimutimes);
+    while (!imu_times_stream.atEnd()) {
+        QString line = imu_times_stream.readLine();
+        imu_times_.push_back(line.toDouble());
+    }
 
-//    // Read imu.txt
-//    QFile fimu(seq_path()+"imu.txt");
-//    if (!fimu.open(QIODevice::ReadOnly | QIODevice::Text))
-//        return;
+    // Read imu.txt
+    QFile fimu(seq_path()+"imu/imu_data.txt");
+    if (!fimu.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
 
-//    QTextStream imu_stream(&fimu);
-//    while (!imu_stream.atEnd()) {
-//        QString line = imu_stream.readLine();
-//        QStringList list = line.split(" ");
-//        Vector6d imu;
-//        imu << list[0].toDouble(), list[1].toDouble(), list[2].toDouble(),list[3].toDouble(), list[4].toDouble(), list[5].toDouble();
-//        imus_.push_back(imu);
-//    }    
+    QTextStream imu_stream(&fimu);
+    while (!imu_stream.atEnd()) {
+        QString line = imu_stream.readLine();
+        QStringList list = line.split(" ");
+        Vector6d imu;
+        imu << list[0].toDouble(), list[1].toDouble(), list[2].toDouble(),list[3].toDouble(), list[4].toDouble(), list[5].toDouble();
+        imus_.push_back(imu);
+    }    
 
 //    // Read encoder.txt
 //    QFile fencoder(seq_path()+"encoder.txt");

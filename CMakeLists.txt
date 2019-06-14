@@ -27,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   tf
   tf_conversions
-  irp_sen_msgs
+#  irp_sen_msgs
 )
 
 find_package (Qt5Widgets)
@@ -142,7 +142,7 @@ catkin_package(
     camera_info_manager
     image_transport
     cv_bridge
-    irp_sen_msgs
+#    irp_sen_msgs
 #  DEPENDS system_lib
 )
 
