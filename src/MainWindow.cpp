@@ -264,7 +264,7 @@ void MainWindow::publish_imu(ros::Publisher& imu_pub, Vector6d imu_data)
 
 
     out_imu.header.seq = imu_index_manager.index();
-    out_imu.header.stamp = ros::Time::now();
+    out_imu.header.stamp = ros::Time(kitti_data_.get_imu_time(imu_index_manager.index()));
     out_imu.header.frame_id = "imu";
     imu_pub_.publish(out_imu);
 }
