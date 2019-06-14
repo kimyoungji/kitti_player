@@ -120,6 +120,15 @@ void MainWindow::load_data()
     if(ui->layerSelector64->isChecked()) kitti_data_.velodyne_layer(Layer64);
     if(ui->layerSelector16->isChecked()) kitti_data_.velodyne_layer(Layer16);
 
+    if(is_imu_pub_) {
+        while( kitti_data_.get_imu_time(imu_index_manager.index())<kitti_data_.get_time(index_manager.index()) )
+        {
+            kitti_data_.set_imu(imu_index_manager.index());
+            publish_imu(imu_pub_, kitti_data_.imu_data());
+            imu_index_manager.inc();
+        }
+    }
+
     if(is_left_image_pub_) {
         kitti_data_.set_left_image(index_manager.index());
         publish_image(left_img_pub_, kitti_data_.left_image(), kitti_data_.P0());
@@ -143,14 +152,7 @@ void MainWindow::load_data()
         kitti_data_.set_velodyne(index_manager.index());
         publish_velodyne(pc_pub_, kitti_data_.velodyne_data());
     }
-    if(is_imu_pub_) {
-        while( kitti_data_.get_imu_time(imu_index_manager.index())<kitti_data_.get_time(index_manager.index()) )
-        {
-            kitti_data_.set_imu(imu_index_manager.index());
-            publish_imu(imu_pub_, kitti_data_.imu_data());
-            imu_index_manager.inc();
-        }
-    }
+
 
 
     // progress slider
@@ -202,7 +204,7 @@ void MainWindow::publish_image(image_transport::CameraPublisher& img_pub, cv::Ma
 {
     cv_bridge::CvImage cv_image;
     cv_image.header.seq = index_manager.index();
-    cv_image.header.stamp = ros::Time::now();
+    cv_image.header.stamp = ros::Time(kitti_data_.get_time(index_manager.index()));
     cv_image.header.frame_id = "kitti";
     if(img.type() == CV_8UC1)
         cv_image.encoding = sensor_msgs::image_encodings::MONO8;
@@ -317,13 +319,7 @@ void MainWindow::on_startButton_clicked()
 
     if(!ui->startButton->text().compare("play")) {
         ui->startButton->setText("stop");
-
-        delay_ms_ = static_cast<int> (kitti_data_.get_time_diff(index_manager.index())*5000);
-        int scaled_time = 200;
-//        int scaled_time = static_cast<int> (static_cast<double>(delay_ms_ ) / speed_);
-
-        timer_->start(scaled_time);
-
+        timer_->start(200);
         load_data();
     }
     else if(!ui->startButton->text().compare("stop")) {
