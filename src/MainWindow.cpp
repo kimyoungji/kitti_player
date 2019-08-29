@@ -33,6 +33,7 @@ void MainWindow::initialize()
 
     // set initial sequence to 00
     reset_sequence();
+    last_time_ = 0;
 }
 
 void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
@@ -46,9 +47,9 @@ void MainWindow::ros_init(ros::NodeHandle node, ros::NodeHandle private_nh)
     private_nh.param("imu_topic", str_imu_topic_, std::string("/kitti/imu"));
 
     private_nh.param("left_image_pub", is_left_image_pub_, true);
-    private_nh.param("right_image_pub", is_right_image_pub_, true);
+    private_nh.param("right_image_pub", is_right_image_pub_, false);
     private_nh.param("left_color_image_pub", is_left_color_image_pub_, true);
-    private_nh.param("right_color_image_pub", is_right_color_image_pub_, true);
+    private_nh.param("right_color_image_pub", is_right_color_image_pub_, false);
     private_nh.param("velodyne_pub", is_velodyne_pub_, false);
     private_nh.param("imu_pub", is_imu_pub_, false);
     private_nh.param("pose_pub", is_pose_pub_, true);
@@ -124,8 +125,8 @@ void MainWindow::load_data()
         while( kitti_data_.get_imu_time(imu_index_manager.index())<kitti_data_.get_time(index_manager.index()) )
         {
             kitti_data_.set_imu(imu_index_manager.index());
-            publish_imu(imu_pub_, kitti_data_.imu_data());
-            imu_index_manager.inc();
+            bool is_pub = publish_imu(imu_pub_, kitti_data_.imu_data());
+            if(is_pub)imu_index_manager.inc();
         }
     }
 
@@ -227,7 +228,7 @@ void MainWindow::publish_image(image_transport::Publisher& img_pub, cv::Mat& img
 {
     cv_bridge::CvImage cv_image;
     cv_image.header.seq = index_manager.index();
-    cv_image.header.stamp = ros::Time::now();
+    cv_image.header.stamp = ros::Time(kitti_data_.get_time(imu_index_manager.index()));
 //    cv_image.header.stamp = sync_time_;
     cv_image.header.frame_id = "kitti";
     if(img.type() == CV_8UC1)
@@ -254,8 +255,14 @@ void MainWindow::publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc)
     pc_pub_.publish(out_pc);
 }
 
-void MainWindow::publish_imu(ros::Publisher& imu_pub, Vector6d imu_data)
+bool MainWindow::publish_imu(ros::Publisher& imu_pub, Vector6d imu_data)
 {
+    if(ros::Time::now().toSec()-last_time_<0.01)
+    {
+    return false;
+    }
+    else{    
+    last_time_ = ros::Time::now().toSec();
     sensor_msgs::Imu out_imu;
     out_imu.linear_acceleration.x = imu_data[0];
     out_imu.linear_acceleration.y = imu_data[1];
@@ -269,6 +276,8 @@ void MainWindow::publish_imu(ros::Publisher& imu_pub, Vector6d imu_data)
     out_imu.header.stamp = ros::Time(kitti_data_.get_imu_time(imu_index_manager.index()));
     out_imu.header.frame_id = "imu";
     imu_pub_.publish(out_imu);
+    return true;
+    }
 }
 
 void MainWindow::set_pixmap()
@@ -319,7 +328,7 @@ void MainWindow::on_startButton_clicked()
 
     if(!ui->startButton->text().compare("play")) {
         ui->startButton->setText("stop");
-        timer_->start(200);
+        timer_->start(100);
         load_data();
     }
     else if(!ui->startButton->text().compare("stop")) {

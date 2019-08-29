@@ -76,6 +76,7 @@ private:
 
     int delay_ms_;
     double speed_;
+    double last_time_;
 
     ///Pointer to dynamic reconfigure service srv_
     std::thread spin_thread_;
@@ -123,7 +124,7 @@ private:
     void publish_image(image_transport::CameraPublisher& img_pub, cv::Mat& img, Matrix3x4 P);
     void publish_image(image_transport::Publisher& img_pub, cv::Mat& img);
     void publish_velodyne(ros::Publisher& pc_pub, PointCloud& pc);
-    void publish_imu(ros::Publisher& imu_pub, Vector6d imu);
+    bool publish_imu(ros::Publisher& imu_pub, Vector6d imu);
 
 
 private slots:
