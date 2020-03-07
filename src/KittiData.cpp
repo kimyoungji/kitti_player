@@ -62,78 +62,36 @@ void KittiData::set_sequence(QString str_seq)
         times_.push_back(line.toDouble());
     }
 
-    // Read imu_times.txt
-    QFile fimutimes(seq_path()+"imu/imu_times.txt");
-    if (!fimutimes.open(QIODevice::ReadOnly | QIODevice::Text))
-        return;
-
-    QTextStream imu_times_stream(&fimutimes);
-    while (!imu_times_stream.atEnd()) {
-        QString line = imu_times_stream.readLine();
-        imu_times_.push_back(line.toDouble());
-    }
-
-    // Read imu.txt
-    QFile fimu(seq_path()+"imu/imu_data.txt");
-    if (!fimu.open(QIODevice::ReadOnly | QIODevice::Text))
-        return;
-
-    QTextStream imu_stream(&fimu);
-    while (!imu_stream.atEnd()) {
-        QString line = imu_stream.readLine();
-        QStringList list = line.split(" ");
-        Vector6d imu;
-        imu << list[0].toDouble(), list[1].toDouble(), list[2].toDouble(),list[3].toDouble(), list[4].toDouble(), list[5].toDouble();
-        imus_.push_back(imu);
-    }    
-
-//    // Read encoder.txt
-//    QFile fencoder(seq_path()+"encoder.txt");
-//    if (!fencoder.open(QIODevice::ReadOnly | QIODevice::Text))
+//    // Read imu_times.txt
+//    QFile fimutimes(seq_path()+"imu/imu_times.txt");
+//    if (!fimutimes.open(QIODevice::ReadOnly | QIODevice::Text))
 //        return;
 
-//    QTextStream encoder_stream(&fencoder);
-//    while (!encoder_stream.atEnd()) {
-//        QString line = encoder_stream.readLine();
-//        QStringList list = line.split(" ");
-//        Eigen::Vector2i enc;
-//        enc<<list[0].toInt(),list[1].toInt();
-//        encoders_.push_back(enc);
+//    QTextStream imu_times_stream(&fimutimes);
+//    while (!imu_times_stream.atEnd()) {
+//        QString line = imu_times_stream.readLine();
+//        imu_times_.push_back(line.toDouble());
 //    }
 
-//    // Read fog.txt
-//    QFile ffog(seq_path()+"fog.txt");
-//    if (!ffog.open(QIODevice::ReadOnly | QIODevice::Text))
+//    // Read imu.txt
+//    QFile fimu(seq_path()+"imu/imu_data.txt");
+//    if (!fimu.open(QIODevice::ReadOnly | QIODevice::Text))
 //        return;
 
-//    QTextStream fog_stream(&ffog);
-//    while (!fog_stream.atEnd()) {
-//        QString line = fog_stream.readLine();
+//    QTextStream imu_stream(&fimu);
+//    while (!imu_stream.atEnd()) {
+//        QString line = imu_stream.readLine();
 //        QStringList list = line.split(" ");
-//        Eigen::Vector3d fog;
-//        fog << list[0].toDouble(), list[1].toDouble(), list[2].toDouble();
-//        fogs_.push_back(fog);
-//    }
+//        Vector6d imu;
+//        imu << list[0].toDouble(), list[1].toDouble(), list[2].toDouble(),list[3].toDouble(), list[4].toDouble(), list[5].toDouble();
+//        imus_.push_back(imu);
+//    }    
 
-//    // Read imu_pose.txt
-//    QFile fimu_pose(seq_path()+"imu_pose.txt");
-//    if (!fimu_pose.open(QIODevice::ReadOnly | QIODevice::Text))
-//        return;
 
-//    QTextStream imu_pose_stream(&fimu_pose);
-//    while (!imu_pose_stream.atEnd()) {
-//        QString line = imu_pose_stream.readLine();
-//        QStringList list = line.split(" ");
-//        Eigen::Matrix4d Tgt;
-//        Tgt << list[0].toDouble(), list[1].toDouble(), list[2].toDouble(), list[3].toDouble(),
-//               list[4].toDouble(), list[5].toDouble(), list[6].toDouble(), list[7].toDouble(),
-//               list[8].toDouble(), list[9].toDouble(), list[10].toDouble(), list[11].toDouble(),
-//               0,    0,    0,    1;
-//        imu_poses_.push_back(Tgt);
-//    }
 
     // Read ground truth poses
-    if(str_seq.toInt() < 11) {
+//    std::cout<<str_seq.toInt()<<std::endl;
+    if(str_seq.toInt() < 16) {
         QFile gt_poses(gt_fname_);
         if (!gt_poses.open(QIODevice::ReadOnly | QIODevice::Text))
             return;
@@ -255,7 +213,7 @@ void KittiData::read_velodyne(QString fname)
             }
             else {
                 if((azimuth - prev_azimuth) < -0.2) {
-                    if(cnt%4 == 0) {
+                    if(cnt%2 == 0) {
                         velodyne_data_  += single_layer;
                     }
                     cnt++;

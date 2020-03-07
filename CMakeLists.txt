@@ -27,6 +27,8 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
   tf
   tf_conversions
+  geometry_msgs
+  eigen_conversions
 #  irp_sen_msgs
 )
 
@@ -142,6 +144,8 @@ catkin_package(
     camera_info_manager
     image_transport
     cv_bridge
+    geometry_msgs
+    eigen_conversions
 #    irp_sen_msgs
 #  DEPENDS system_lib
 )
